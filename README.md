@@ -27,6 +27,8 @@ phone runtime.
 | `100_pretrained_voice`    | `pretrained` | Kokoro-82M checked against audio-reader’s controls: speed, word timings, rate              |
 | `101_faster_speech`       |              | Naive speed-ups and six time-stretchers against Kokoro’s own speed, 1.5x to 3x: Sonic wins |
 | `102_player`              | `player`     | Play, pause at the word, seek, skip and speed, on Kokoro and streaming Sonic               |
+| `103_hardware`            | `deploy`     | Kokoro’s decoder on the Mac’s GPU and Neural Engine via Core ML, smaller weights, XNNPACK  |
+| `104_phone`               | `phone`      | The decoder on a Pixel 10a through LiteRT: the converter’s bugs, CPU against GPU           |
 | `999_fourier`             |              | The FFT from scratch                                                                       |
 
 Code lives in the notebooks. Cells marked `#| export` are written to `text_to_speech/` by `nbdev-export`, so never edit
@@ -37,7 +39,7 @@ the `.py` files directly.
 ``` sh
 uv sync                  # install, including nbdev
 uv run nbdev-export      # notebooks -> text_to_speech/
-uv run nbdev-test        # run the notebooks that are quick to run (00, 03, 04 and 101 are skipped)
+uv run nbdev-test        # run the notebooks that are quick to run (00, 03, 04, 101, 103 and 104 are skipped)
 uv run nbdev-clean       # strip noisy notebook metadata before committing
 uv run nbdev-readme      # regenerate README.md from this notebook
 ```

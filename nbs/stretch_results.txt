@@ -1,0 +1,33 @@
+1x  Kokoro  recall 97.6%  MOS 4.52
+1.5x  Kokoro speed (keep edges)  actual 1.51x  recall 94.1%  MOS 4.36
+1.5x  Sonic                      actual 1.50x  recall 97.6%  MOS 4.29  0.0s
+1.5x  phase vocoder (librosa)    actual 1.50x  recall 95.1%  MOS 1.32  0.6s
+1.5x  WSOLA (audiotsm)           actual 1.52x  recall 97.6%  MOS 4.03  0.4s
+1.5x  HPTSM (pytsmod)            actual 1.50x  recall 97.6%  MOS 3.52  1.2s
+1.5x  TD-PSOLA (pytsmod)         actual 1.50x  recall 97.6%  MOS 3.76  5.3s
+1.5x  Rubber Band R2 faster      actual 1.50x  recall 97.6%  MOS 2.51  0.1s
+1.5x  Rubber Band R3 finer       actual 1.50x  recall 97.6%  MOS 3.69  1.0s
+2x  Kokoro speed (keep edges)  actual 1.73x  recall 87.3%  MOS 4.22
+2x  Sonic                      actual 2.00x  recall 97.6%  MOS 2.92  0.0s
+2x  phase vocoder (librosa)    actual 2.00x  recall 86.0%  MOS 1.31  0.1s
+2x  WSOLA (audiotsm)           actual 2.03x  recall 92.8%  MOS 2.62  0.3s
+2x  HPTSM (pytsmod)            actual 2.00x  recall 97.6%  MOS 1.71  1.0s
+2x  TD-PSOLA (pytsmod)         actual 2.00x  recall 97.6%  MOS 1.56  2.4s
+2x  Rubber Band R2 faster      actual 2.00x  recall 95.1%  MOS 1.45  0.1s
+2x  Rubber Band R3 finer       actual 2.00x  recall 97.6%  MOS 2.05  0.4s
+2.5x  Kokoro speed (keep edges)  actual 1.94x  recall 73.9%  MOS 4.02
+2.5x  Sonic                      actual 2.51x  recall 93.7%  MOS 1.38  0.0s
+2.5x  phase vocoder (librosa)    actual 2.50x  recall 52.8%  MOS 1.31  0.1s
+2.5x  WSOLA (audiotsm)           actual 3.05x  recall 62.6%  MOS 1.34  0.2s
+2.5x  HPTSM (pytsmod)            actual 2.50x  recall 94.6%  MOS 1.34  1.0s
+2.5x  TD-PSOLA (pytsmod)         actual 2.50x  recall 93.7%  MOS 1.34  2.2s
+2.5x  Rubber Band R2 faster      actual 2.50x  recall 92.1%  MOS 1.30  0.1s
+2.5x  Rubber Band R3 finer       actual 2.50x  recall 93.1%  MOS 1.33  0.3s
+3x  Kokoro speed (keep edges)  actual 2.03x  recall 73.3%  MOS 3.97
+3x  Sonic                      actual 3.01x  recall 88.8%  MOS 1.33  0.0s
+3x  phase vocoder (librosa)    actual 3.00x  recall 15.8%  MOS 1.31  0.1s
+3x  WSOLA (audiotsm)           actual 4.06x  recall 14.6%  MOS 1.31  0.2s
+3x  HPTSM (pytsmod)            actual 3.00x  recall 77.7%  MOS 1.31  0.9s
+3x  TD-PSOLA (pytsmod)         actual 3.00x  recall 82.5%  MOS 1.31  2.3s
+3x  Rubber Band R2 faster      actual 3.00x  recall 74.4%  MOS 1.28  0.1s
+3x  Rubber Band R3 finer       actual 3.00x  recall 89.9%  MOS 1.30  0.3s

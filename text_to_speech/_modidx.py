@@ -26,6 +26,8 @@ d = { 'settings': {'branch': 'main', 'doc_baseurl': '/', 'doc_host': '', 'git_ur
                                        'text_to_speech.player.Player.seek': ('player.html#player.seek', 'text_to_speech/player.py'),
                                        'text_to_speech.player.Player.set_speed': ( 'player.html#player.set_speed',
                                                                                    'text_to_speech/player.py'),
+                                       'text_to_speech.player.Player.set_voice': ( 'player.html#player.set_voice',
+                                                                                   'text_to_speech/player.py'),
                                        'text_to_speech.player.Player.skip': ('player.html#player.skip', 'text_to_speech/player.py'),
                                        'text_to_speech.player.Player.speakers': ('player.html#player.speakers', 'text_to_speech/player.py'),
                                        'text_to_speech.player.Sentence': ('player.html#sentence', 'text_to_speech/player.py'),

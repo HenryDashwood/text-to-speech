@@ -43,10 +43,10 @@ class Sentence:
     words: list  # A Word for each spoken word, positions in the text and in `audio`
 
 
-def render_sentence(text, start, end, margin=(0.1, 0.25)):
+def render_sentence(text, start, end, voice="af_heart", margin=(0.1, 0.25)):
     "Kokoro's audio for `text[start:end]`, with every word's position in `text` and in the audio."
     sentence = text[start:end].replace("\n", " ")  # Same length, and Kokoro won't join words across a line break
-    r = say(sentence)
+    r = say(sentence, voice=voice)
     spans = word_spans(sentence, r.tokens).dropna()
     spans = spans[spans.text.str.contains(r"\w")]
     first = max(0, int((spans.start.min() - margin[0]) * SR))
@@ -116,8 +116,8 @@ BLOCK = 1024  # 1x samples fed to Sonic at a time
 class Player:
     "Reads `text` aloud. Like audio-reader's ArticlePlayer: play, pause at a word, seek, skip and speed."
 
-    def __init__(self, text, speed=1.0, on_word=None, lookahead=2):
-        self.text, self.on_word, self.lookahead = text, on_word, lookahead
+    def __init__(self, text, speed=1.0, voice="af_heart", on_word=None, lookahead=2):
+        self.text, self.voice, self.on_word, self.lookahead = text, voice, on_word, lookahead
         self.spans = sentence_spans(text)
         self.rendered = {}  # Sentence index -> Sentence
         self.index, self.pos = 0, 0  # The playhead: a sentence, and a 1x sample within it
@@ -135,9 +135,11 @@ class Player:
                 if not todo:
                     self.lock.wait()
                     continue
-            sentence = render_sentence(self.text, *self.spans[todo[0]])
+                i, voice = todo[0], self.voice
+            sentence = render_sentence(self.text, *self.spans[i], voice=voice)
             with self.lock:
-                self.rendered[todo[0]] = sentence
+                if voice == self.voice:  # Throw away a render for a voice we've since switched from
+                    self.rendered[i] = sentence
                 self.lock.notify_all()
 
     def ready(self):
@@ -202,6 +204,15 @@ class Player:
         with self.lock:
             self.speed = speed
             self.sonic.set_speed(speed)
+
+    def set_voice(self, voice):
+        "Switch voice from the start of the current sentence, since its audio and every word's place change."
+        with self.lock:
+            self.voice, self.rendered = voice, {}
+            self.pos, self.sonic = 0, Sonic(self.speed)
+            if self.mode != "paused":
+                self.mode = "playing"
+            self.lock.notify_all()
 
     def _duration(self, i):
         s = self.rendered.get(i)

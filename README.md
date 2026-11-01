@@ -17,19 +17,23 @@ phone runtime.
 
 ## Notebooks
 
-| Notebook                  | Exports      |                                                                                            |
-|---------------------------|--------------|--------------------------------------------------------------------------------------------|
-| `00_recorded_speech`      | `core`       | Sound as numbers: waveform, spectrum, spectrogram. `DATA`, `default_device`, `record`      |
-| `01_explore_ljspeech`     | `data`       | Download LJSpeech and load its transcripts                                                 |
-| `02_mel_spectrograms`     | `audio`      | The log mel spectrogram from scratch, and codec tokens                                     |
-| `03_vocoder`              | `vocoder`    | HiFi-GAN built and trained on a laptop                                                     |
-| `04_vocoder_improvements` |              | More data, LR decay and a wider generator, one at a time                                   |
-| `100_pretrained_voice`    | `pretrained` | Kokoro-82M checked against audio-reader’s controls: speed, word timings, rate              |
-| `101_faster_speech`       |              | Naive speed-ups and six time-stretchers against Kokoro’s own speed, 1.5x to 3x: Sonic wins |
-| `102_player`              | `player`     | Play, pause at the word, seek, skip and speed, on Kokoro and streaming Sonic               |
-| `103_hardware`            | `deploy`     | Kokoro’s decoder on the Mac’s GPU and Neural Engine via Core ML, smaller weights, XNNPACK  |
-| `104_phone`               | `phone`      | The decoder on a Pixel 10a through LiteRT: the converter’s bugs, CPU against GPU           |
-| `999_fourier`             |              | The FFT from scratch                                                                       |
+| Notebook                  | Exports   |                                                                                                     |
+|---------------------------|-----------|-----------------------------------------------------------------------------------------------------|
+| `00_recorded_speech`      | `core`    | Sound as numbers: waveform, spectrum, spectrogram. `DATA`, `default_device`, `record`               |
+| `01_explore_ljspeech`     | `data`    | Download LJSpeech and load its transcripts                                                          |
+| `02_mel_spectrograms`     | `audio`   | The log mel spectrogram from scratch, and codec tokens                                              |
+| `03_vocoder`              | `vocoder` | HiFi-GAN built and trained on a laptop                                                              |
+| `04_vocoder_improvements` |           | More data, LR decay and a wider generator, one at a time                                            |
+| `100_voice`               | `voice`   | Kokoro taken apart: phonemes, timed frames, decoder, where every word lands; `say` with any decoder |
+| `101_speed`               | `sonic`   | Why Kokoro can’t just talk faster; resampling, overlap-add and WSOLA from scratch, then Sonic       |
+| `102_player`              | `player`  | The player, one control at a time: play, pause at a word, seek, skip, speed, voice                  |
+| `103_coreml`              | `coreml`  | The decoder made exportable, split, and converted: a drop-in Core ML decoder for the Mac’s GPU      |
+| `104_litert`              | `litert`  | Five tested rewrites get the decoder onto a Pixel 10a’s GPU through LiteRT                          |
+| `105_reader`              |           | Swinging the bat: the player on the Core ML decoder                                                 |
+| `190_speed_benchmarks`    |           | Appendix: what Kokoro’s own speed loses; nine speed-ups by recogniser and predicted MOS             |
+| `193_coreml_benchmarks`   |           | Appendix: Apple CPU, GPU and Neural Engine, smaller weights, XNNPACK                                |
+| `194_litert_benchmarks`   |           | Appendix: the Pixel 10a’s CPU and GPU, load times                                                   |
+| `999_fourier`             |           | The FFT from scratch                                                                                |
 
 Code lives in the notebooks. Cells marked `#| export` are written to `text_to_speech/` by `nbdev-export`, so never edit
 the `.py` files directly.
@@ -39,7 +43,7 @@ the `.py` files directly.
 ``` sh
 uv sync                  # install, including nbdev
 uv run nbdev-export      # notebooks -> text_to_speech/
-uv run nbdev-test        # run the notebooks that are quick to run (00, 03, 04, 101, 103 and 104 are skipped)
+uv run nbdev-test        # run the notebooks that are quick to run (00, 03, 04, 104 and the 19x appendices are skipped)
 uv run nbdev-clean       # strip noisy notebook metadata before committing
 uv run nbdev-readme      # regenerate README.md from this notebook
 ```

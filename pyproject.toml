@@ -54,10 +54,10 @@ put_version_in_init = false
 
 [dependency-groups]
 dev = [
-    "ipykernel>=7.3.0",
+    "ipykernel>=7.4.0",
     "ipywidgets>=8.1.9",
-    "jupyterlab>=4.6.4",
+    "jupyterlab>=4.6.5",
     "nbdev>=3.3.27",
-    "ruff>=0.16.8",
-    "ty>=0.0.83",
+    "ruff>=0.17.3",
+    "ty>=0.0.95",
 ]

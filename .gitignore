@@ -1,0 +1,24 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Datasets
+data/
+
+# nbdev
+_docs/
+_proc/
+.ruff_cache/
+
+**/.env
+
+# Built from vendor/ sources
+*.dylib
+*.so

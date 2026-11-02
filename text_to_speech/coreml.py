@@ -6,10 +6,8 @@
 __all__ = ['BUCKETS', 'COREML', 'ExactSTFT', 'compile_coreml', 'exportable_decoder', 'HarmonicSource', 'Body', 'rsqrt',
            'multiply', 'to_coreml', 'tile', 'CoreMLDecoder']
 
-# %% ../nbs/103_coreml.ipynb #4a33acc2
+# %% ../nbs/103_coreml.ipynb #1f753257
 import copy
-import os
-import tempfile
 import types
 
 import coremltools as ct
@@ -25,7 +23,7 @@ from kokoro.custom_stft import CustomSTFT
 from .core import DATA
 from .voice import FRAME, decode, model
 
-# %% ../nbs/103_coreml.ipynb #d2ed6575
+# %% ../nbs/103_coreml.ipynb #25905b83
 class ExactSTFT(CustomSTFT):
     "Kokoro's convolutional STFT with torch.stft's reflect padding, and an inverse that matches torch.istft."
 
@@ -46,14 +44,14 @@ class ExactSTFT(CustomSTFT):
         pad = self.n_fft // 2
         return ((real - imag) / envelope)[..., pad:-pad]
 
-# %% ../nbs/103_coreml.ipynb #3eb7df54
+# %% ../nbs/103_coreml.ipynb #49716cd4
 def compile_coreml(m, path, units="CPU_ONLY"):
     "Save converted model `m` at `path` (an .mlpackage), compile it next to it, and load it on `units`."
     m.save(str(path))
     compiled = ct.utils.compile_model(str(path), str(path).replace(".mlpackage", ".mlmodelc"))
     return ct.models.CompiledMLModel(compiled, compute_units=getattr(ct.ComputeUnit, units))
 
-# %% ../nbs/103_coreml.ipynb #07db38fe
+# %% ../nbs/103_coreml.ipynb #295d83b8
 def _f02sine(self, f0_values):
     "Kokoro's SineGen._f02sine, with F0 clamped at zero, % 1 written out, and the phase wrapped before the sine."
     rad_values = f0_values.clamp(min=0) / self.sampling_rate
@@ -69,7 +67,7 @@ def _f02sine(self, f0_values):
     cycles = cycles.transpose(1, 2)
     return torch.sin(2 * torch.pi * (cycles - torch.floor(cycles)))
 
-# %% ../nbs/103_coreml.ipynb #6aa9353f
+# %% ../nbs/103_coreml.ipynb #c740b04e
 def exportable_decoder():
     "A copy of Kokoro's decoder that converters can handle, and that sounds the same."
     for m in model.decoder.modules():
@@ -86,7 +84,7 @@ def exportable_decoder():
             torch.nn.utils.remove_weight_norm(m)
     return dec.requires_grad_(False)  # After folding, which makes new parameters
 
-# %% ../nbs/103_coreml.ipynb #036b0dba
+# %% ../nbs/103_coreml.ipynb #b78cc36b
 class HarmonicSource(torch.nn.Module):
     "Pitch -> the STFT of the decoder's sine source. Adds up phase over the whole sentence, so needs 32 bits."
 
@@ -94,8 +92,8 @@ class HarmonicSource(torch.nn.Module):
         super().__init__()
         self.gen = dec.generator
 
-    def forward(self, F0_curve):
-        f0 = self.gen.f0_upsamp(F0_curve[:, None]).transpose(1, 2)
+    def forward(self, f0):
+        f0 = self.gen.f0_upsamp(f0[:, None]).transpose(1, 2)
         har_source, _, _ = self.gen.m_source(f0)
         spec, phase = self.gen.stft.transform(har_source.transpose(1, 2).squeeze(1))
         return torch.cat([spec, phase], dim=1)
@@ -108,9 +106,10 @@ class Body(torch.nn.Module):
         super().__init__()
         self.dec = dec
 
-    def forward(self, asr, F0_curve, N, s, har):
+    def forward(self, asr, f0, n, style, har):
+        "Argument names become the Core ML model's input names."
         d, g = self.dec, self.dec.generator
-        F0, N = d.F0_conv(F0_curve.unsqueeze(1)), d.N_conv(N.unsqueeze(1))
+        F0, N, s = d.F0_conv(f0.unsqueeze(1)), d.N_conv(n.unsqueeze(1)), style
         x = d.encode(torch.cat([asr, F0, N], axis=1), s)
         asr_res, res = d.asr_res(asr), True
         for block in d.decode:
@@ -130,7 +129,7 @@ class Body(torch.nn.Module):
         spec, phase = torch.exp(x[:, : g.post_n_fft // 2 + 1, :]), torch.sin(x[:, g.post_n_fft // 2 + 1 :, :])
         return g.stft.inverse(spec, phase)
 
-# %% ../nbs/103_coreml.ipynb #f612abe0
+# %% ../nbs/103_coreml.ipynb #72fe6255
 @register_torch_op(override=True)
 def rsqrt(context, node):
     "Kokoro takes rsqrt of the integer 2, which PyTorch promotes to a float and coremltools doesn't."
@@ -146,24 +145,22 @@ def multiply(context, node):
     mul(context, node)
 
 
-def to_coreml(module, args, names, precision=ct.precision.FLOAT16):
-    "Trace `module` at the shapes of `args` and convert it."
-    traced = torch.jit.trace(module, args, check_trace=False)
-    inputs = [ct.TensorType(name=n, shape=a.shape) for n, a in zip(names, args)]
+def to_coreml(module, args, precision=ct.precision.FLOAT16):
+    "Export `module` at the shapes of `args` with torch.export and convert it. Inputs are named after its arguments."
+    program = torch.export.export(module, args).run_decompositions({})
     return ct.convert(
-        traced,
-        inputs=inputs,
+        program,
         outputs=[ct.TensorType(name="out")],
         compute_precision=precision,
         minimum_deployment_target=ct.target.macOS15,
     )
 
-# %% ../nbs/103_coreml.ipynb #8cf238f9
+# %% ../nbs/103_coreml.ipynb #5c09cfcb
 def tile(x, n):
     "Repeat `x` along its last axis to length `n`: padding whose statistics look like the sentence's."
     return torch.cat([x] * -(-n // x.shape[-1]), -1)[..., :n]
 
-# %% ../nbs/103_coreml.ipynb #faad65b0
+# %% ../nbs/103_coreml.ipynb #b2ad0fd5
 BUCKETS = [128, 256, 512]  # Frames: 3.2, 6.4 and 12.8 s
 COREML = DATA / "coreml"
 
@@ -175,7 +172,7 @@ def _build(T, dec):
     if not (COREML / f"body{T}.mlmodelc").exists():
         F0 = torch.zeros(1, 2 * T)
         args = (torch.zeros(1, 512, T), F0, torch.zeros(1, 2 * T), torch.zeros(1, 128), HarmonicSource(dec)(F0))
-        compile_coreml(to_coreml(Body(dec), args, ["asr", "F0", "N", "s", "har"]), COREML / f"body{T}.mlpackage")
+        compile_coreml(to_coreml(Body(dec), args), COREML / f"body{T}.mlpackage")
 
 
 class CoreMLDecoder:
@@ -198,5 +195,5 @@ class CoreMLDecoder:
             return decode(u)
         B = next(b for b in BUCKETS if b >= T)
         F0 = tile(u.F0, 2 * B)
-        inputs = {"asr": tile(u.asr, B), "F0": F0, "N": tile(u.N, 2 * B), "s": u.style, "har": self.source(F0)}
+        inputs = {"asr": tile(u.asr, B), "f0": F0, "n": tile(u.N, 2 * B), "style": u.style, "har": self.source(F0)}
         return self.body[B].predict({k: v.numpy() for k, v in inputs.items()})["out"].squeeze()[: T * FRAME]

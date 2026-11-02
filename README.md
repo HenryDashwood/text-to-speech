@@ -30,6 +30,8 @@ phone runtime.
 | `103_coreml`              | `coreml`  | The decoder made exportable, split, and converted: a drop-in Core ML decoder for the Mac’s GPU      |
 | `104_litert`              | `litert`  | Five tested rewrites get the decoder onto a Pixel 10a’s GPU through LiteRT                          |
 | `105_reader`              |           | Swinging the bat: the player on the Core ML decoder                                                 |
+| `106_phone`               | `phone`   | The rest of the voice off PyTorch for both phones, shrunk for download, scored end to end           |
+| `107_g2p`                 | `g2p`     | Text to phonemes without Python or espeak: misaki in Rust, a build-time lexicon, a model for names  |
 | `190_speed_benchmarks`    |           | Appendix: what Kokoro’s own speed loses; nine speed-ups by recogniser and predicted MOS             |
 | `193_coreml_benchmarks`   |           | Appendix: Apple CPU, GPU and Neural Engine, smaller weights, XNNPACK                                |
 | `194_litert_benchmarks`   |           | Appendix: the Pixel 10a’s CPU and GPU, load times                                                   |
@@ -43,7 +45,7 @@ the `.py` files directly.
 ``` sh
 uv sync                  # install, including nbdev
 uv run nbdev-export      # notebooks -> text_to_speech/
-uv run nbdev-test        # run the notebooks that are quick to run (00, 03, 04, 104 and the 19x appendices are skipped)
+uv run nbdev-test        # run the notebooks that are quick to run (00, 03, 04, 104, 106, 107 and the 19x appendices are skipped)
 uv run nbdev-clean       # strip noisy notebook metadata before committing
 uv run nbdev-readme      # regenerate README.md from this notebook
 ```

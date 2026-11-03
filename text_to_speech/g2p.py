@@ -7,9 +7,9 @@ the words no lexicon has, and abbreviations written out first."""
 __all__ = ['TEXT', 'G2P', 'NATIVE', 'ARPABET_VOWELS', 'ARPABET_CONSONANTS', 'UP', 'MISAKI_RS', 'MISAKI_RS_DATA', 'corpus',
            'unknown', 'arpabet_to_misaki', 'cmudict', 'misaki_lexicon', 'word_list', 'unknown_words', 'build_lexicon',
            'G2PNet', 'ctc_decode', 'g2p_data', 'batches', 'edit_distance', 'evaluate', 'train_g2p', 'export_g2p',
-           'misaki_rs_data', 'rust_example', 'rust_g2p']
+           'misaki_rs_data', 'rust_example', 'rust_g2p', 'voice_folder']
 
-# %% ../nbs/107_g2p.ipynb #4351f47b
+# %% ../nbs/107_g2p.ipynb #e58a4792
 import functools
 import glob
 import json
@@ -17,6 +17,7 @@ import math
 import os
 import random
 import re
+import shutil
 import string
 import struct
 import subprocess
@@ -35,16 +36,17 @@ from misaki.token import MToken
 
 from .core import DATA
 from .data import metadata
-from .phone import VOICE, size_mb
+from .phone import ANDROID, IOS, SIZES, VOICE, size_mb
+from .voice import SR, model
 
-# %% ../nbs/107_g2p.ipynb #8a48bb48
+# %% ../nbs/107_g2p.ipynb #dbbe3c26
 TEXT = VOICE / "text"
 G2P = DATA / "g2p"
-NATIVE = Path.home() / "audio-reader" / "native" / "g2p"
+NATIVE = Path(os.environ.get("MAGPIE_G2P", Path.home() / "audio-reader" / "native" / "g2p"))  # Or another checkout
 TEXT.mkdir(parents=True, exist_ok=True)
 G2P.mkdir(parents=True, exist_ok=True)
 
-# %% ../nbs/107_g2p.ipynb #3681c657
+# %% ../nbs/107_g2p.ipynb #ec582117
 def corpus(n=1500, seed=0):
     "LJSpeech sentences, and the prose paragraphs of audio-reader's docs."
     lines = list(metadata().normalized_text.dropna())
@@ -65,7 +67,7 @@ def unknown(tokens):
     "The tokens with letters in them that misaki left without phonemes."
     return [t for t in tokens if any(c.isalpha() for c in t.text) and (t.phonemes is None or "❓" in t.phonemes)]
 
-# %% ../nbs/107_g2p.ipynb #6ed0e4ee
+# %% ../nbs/107_g2p.ipynb #76c65c04
 ARPABET_VOWELS = {  # -> misaki's US phonemes, (stressed, unstressed)
     "AA": ("ɑ", "ɑ"),
     "AE": ("æ", "æ"),
@@ -148,7 +150,7 @@ def misaki_lexicon(accent):
                 out[w.lower()] = p
     return out
 
-# %% ../nbs/107_g2p.ipynb #7a32b31d
+# %% ../nbs/107_g2p.ipynb #eb8ec550
 def word_list():
     "Candidate words: CMUdict's, and macOS's word lists'."
     words = set(cmudict())
@@ -186,7 +188,7 @@ def build_lexicon(accent):
     path.write_text(json.dumps(lexicon, ensure_ascii=False, separators=(",", ":"), sort_keys=True))
     return lexicon
 
-# %% ../nbs/107_g2p.ipynb #9ad94eb0
+# %% ../nbs/107_g2p.ipynb #f549688b
 UP = 3  # Output slots per letter
 
 
@@ -219,7 +221,7 @@ def ctc_decode(logits, n, phonemes):
         prev = i
     return "".join(out)
 
-# %% ../nbs/107_g2p.ipynb #7b4b8c3a
+# %% ../nbs/107_g2p.ipynb #5d73fd31
 def g2p_data(accent):
     "(lexicon, train words, test words, letters, phonemes) for one accent."
     lexicon = misaki_lexicon(accent)
@@ -269,7 +271,7 @@ def evaluate(net, words, lexicon, letters, phonemes, device="cpu"):
             total += len(lexicon[w])
     return right / len(words), errors / total
 
-# %% ../nbs/107_g2p.ipynb #eb6c44d1
+# %% ../nbs/107_g2p.ipynb #56e0b669
 def train_g2p(accent, epochs=15, log=print):
     "Train G2PNet for one accent (an hour and a quarter on an M3 Pro), or load it once trained: G2P/g2p_{accent}.pt."
     path = G2P / f"g2p_{accent}.pt"
@@ -313,7 +315,7 @@ def train_g2p(accent, epochs=15, log=print):
     torch.save({"state": net.state_dict(), "letters": letters, "phonemes": phonemes}, path)
     return net
 
-# %% ../nbs/107_g2p.ipynb #c86be7bb
+# %% ../nbs/107_g2p.ipynb #3664f604
 def export_g2p(accent):
     "TEXT/g2p_{accent}.g2p: 'G2P1', a little-endian u32 header length, a JSON header, then the weights as 16-bit floats."
     c = torch.load(G2P / f"g2p_{accent}.pt")
@@ -338,7 +340,7 @@ def export_g2p(accent):
     with open(TEXT / f"g2p_{accent}.g2p", "wb") as f:
         f.write(b"G2P1" + struct.pack("<I", len(header)) + header + b"".join(chunks))
 
-# %% ../nbs/107_g2p.ipynb #2c9a380f
+# %% ../nbs/107_g2p.ipynb #8c1aefd2
 MISAKI_RS = "0.8.0"
 MISAKI_RS_DATA = ["us_gold.json", "us_silver.json", "gb_gold.json", "gb_silver.json", "tagger.bin", "tagger_labels.txt"]
 
@@ -380,3 +382,44 @@ def rust_g2p(lines, accent):
         check=True,
     )
     return [json.loads(line) for line in r.stdout.splitlines()]
+
+# %% ../nbs/107_g2p.ipynb #0cf215d3
+def voice_folder(platform, simulator=False):
+    "Everything the app on `platform` ('ios' or 'android') downloads, in VOICE/<platform>-pack. Returns the folder."
+    out = VOICE / f"{platform}-pack"
+    shutil.rmtree(out, ignore_errors=True)
+    out.mkdir(parents=True)
+    source, models = (
+        (
+            IOS,
+            {
+                "tokens.mlmodelc": "tokens8.mlmodelc",
+                "prosody.mlmodelc": "prosody8.mlmodelc",
+                "source.mlmodelc": "source.mlmodelc",
+                "body.mlmodelc": "body8.mlmodelc",
+            },
+        )
+        if platform == "ios"
+        else (
+            ANDROID,
+            {
+                "tokens.onnx": "tokens.onnx",
+                "prosody.onnx": "prosody.onnx",
+                "source.onnx": "source.onnx",
+                "body.tflite": "body_fp16.tflite",
+            },
+        )
+    )
+    for name, built in models.items():
+        (shutil.copytree if (source / built).is_dir() else shutil.copy)(source / built, out / name)
+    shutil.copytree(source / "voices", out / "voices")
+    for f in TEXT.iterdir():
+        shutil.copy(f, out / f.name)
+    (out / "vocab.json").write_text(json.dumps(model.vocab, ensure_ascii=False))
+    (out / "voice.json").write_text(json.dumps({"sizes": SIZES, "sampleRate": SR}))
+    if simulator:
+        import coremltools as ct
+
+        for T in SIZES:
+            ct.utils.compile_model(str(VOICE / "parts" / f"body8{T}.mlpackage"), str(out / f"body{T}.mlmodelc"))
+    return out

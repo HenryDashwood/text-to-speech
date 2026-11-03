@@ -9,7 +9,7 @@ __all__ = ['TEXT', 'G2P', 'NATIVE', 'ARPABET_VOWELS', 'ARPABET_CONSONANTS', 'UP'
            'G2PNet', 'ctc_decode', 'g2p_data', 'batches', 'edit_distance', 'evaluate', 'train_g2p', 'export_g2p',
            'misaki_rs_data', 'rust_example', 'rust_g2p', 'voice_folder']
 
-# %% ../nbs/107_g2p.ipynb #e58a4792
+# %% ../nbs/107_g2p.ipynb #72e66ef7
 import functools
 import glob
 import json
@@ -39,14 +39,14 @@ from .data import metadata
 from .phone import ANDROID, IOS, SIZES, VOICE, size_mb
 from .voice import SR, model
 
-# %% ../nbs/107_g2p.ipynb #dbbe3c26
+# %% ../nbs/107_g2p.ipynb #74bcd3a8
 TEXT = VOICE / "text"
 G2P = DATA / "g2p"
 NATIVE = Path(os.environ.get("MAGPIE_G2P", Path.home() / "audio-reader" / "native" / "g2p"))  # Or another checkout
 TEXT.mkdir(parents=True, exist_ok=True)
 G2P.mkdir(parents=True, exist_ok=True)
 
-# %% ../nbs/107_g2p.ipynb #ec582117
+# %% ../nbs/107_g2p.ipynb #c3449993
 def corpus(n=1500, seed=0):
     "LJSpeech sentences, and the prose paragraphs of audio-reader's docs."
     lines = list(metadata().normalized_text.dropna())
@@ -67,7 +67,7 @@ def unknown(tokens):
     "The tokens with letters in them that misaki left without phonemes."
     return [t for t in tokens if any(c.isalpha() for c in t.text) and (t.phonemes is None or "❓" in t.phonemes)]
 
-# %% ../nbs/107_g2p.ipynb #76c65c04
+# %% ../nbs/107_g2p.ipynb #b4fb4d4f
 ARPABET_VOWELS = {  # -> misaki's US phonemes, (stressed, unstressed)
     "AA": ("ɑ", "ɑ"),
     "AE": ("æ", "æ"),
@@ -150,7 +150,7 @@ def misaki_lexicon(accent):
                 out[w.lower()] = p
     return out
 
-# %% ../nbs/107_g2p.ipynb #eb8ec550
+# %% ../nbs/107_g2p.ipynb #5c8a2da1
 def word_list():
     "Candidate words: CMUdict's, and macOS's word lists'."
     words = set(cmudict())
@@ -188,7 +188,7 @@ def build_lexicon(accent):
     path.write_text(json.dumps(lexicon, ensure_ascii=False, separators=(",", ":"), sort_keys=True))
     return lexicon
 
-# %% ../nbs/107_g2p.ipynb #f549688b
+# %% ../nbs/107_g2p.ipynb #cfc675e5
 UP = 3  # Output slots per letter
 
 
@@ -221,7 +221,7 @@ def ctc_decode(logits, n, phonemes):
         prev = i
     return "".join(out)
 
-# %% ../nbs/107_g2p.ipynb #5d73fd31
+# %% ../nbs/107_g2p.ipynb #c540d30d
 def g2p_data(accent):
     "(lexicon, train words, test words, letters, phonemes) for one accent."
     lexicon = misaki_lexicon(accent)
@@ -271,7 +271,7 @@ def evaluate(net, words, lexicon, letters, phonemes, device="cpu"):
             total += len(lexicon[w])
     return right / len(words), errors / total
 
-# %% ../nbs/107_g2p.ipynb #56e0b669
+# %% ../nbs/107_g2p.ipynb #c0ed374b
 def train_g2p(accent, epochs=15, log=print):
     "Train G2PNet for one accent (an hour and a quarter on an M3 Pro), or load it once trained: G2P/g2p_{accent}.pt."
     path = G2P / f"g2p_{accent}.pt"
@@ -315,7 +315,7 @@ def train_g2p(accent, epochs=15, log=print):
     torch.save({"state": net.state_dict(), "letters": letters, "phonemes": phonemes}, path)
     return net
 
-# %% ../nbs/107_g2p.ipynb #3664f604
+# %% ../nbs/107_g2p.ipynb #05babd12
 def export_g2p(accent):
     "TEXT/g2p_{accent}.g2p: 'G2P1', a little-endian u32 header length, a JSON header, then the weights as 16-bit floats."
     c = torch.load(G2P / f"g2p_{accent}.pt")
@@ -340,7 +340,7 @@ def export_g2p(accent):
     with open(TEXT / f"g2p_{accent}.g2p", "wb") as f:
         f.write(b"G2P1" + struct.pack("<I", len(header)) + header + b"".join(chunks))
 
-# %% ../nbs/107_g2p.ipynb #8c1aefd2
+# %% ../nbs/107_g2p.ipynb #a1c9806c
 MISAKI_RS = "0.8.0"
 MISAKI_RS_DATA = ["us_gold.json", "us_silver.json", "gb_gold.json", "gb_silver.json", "tagger.bin", "tagger_labels.txt"]
 
@@ -383,7 +383,7 @@ def rust_g2p(lines, accent):
     )
     return [json.loads(line) for line in r.stdout.splitlines()]
 
-# %% ../nbs/107_g2p.ipynb #0cf215d3
+# %% ../nbs/107_g2p.ipynb #d4c83b69
 def voice_folder(platform, simulator=False):
     "Everything the app on `platform` ('ios' or 'android') downloads, in VOICE/<platform>-pack. Returns the folder."
     out = VOICE / f"{platform}-pack"
@@ -403,8 +403,8 @@ def voice_folder(platform, simulator=False):
         else (
             ANDROID,
             {
-                "tokens.onnx": "tokens.onnx",
-                "prosody.onnx": "prosody.onnx",
+                "tokens.onnx": "tokens8.onnx",
+                "prosody.onnx": "prosody8.onnx",
                 "source.onnx": "source.onnx",
                 "body.tflite": "body_fp16.tflite",
             },

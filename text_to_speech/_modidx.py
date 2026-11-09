@@ -56,6 +56,7 @@ d = { 'settings': {'branch': 'main', 'doc_baseurl': '/', 'doc_host': '', 'git_ur
                                     'text_to_speech.g2p.rust_example': ('g2p.html#rust_example', 'text_to_speech/g2p.py'),
                                     'text_to_speech.g2p.rust_g2p': ('g2p.html#rust_g2p', 'text_to_speech/g2p.py'),
                                     'text_to_speech.g2p.train_g2p': ('g2p.html#train_g2p', 'text_to_speech/g2p.py'),
+                                    'text_to_speech.g2p.trim_tflite': ('g2p.html#trim_tflite', 'text_to_speech/g2p.py'),
                                     'text_to_speech.g2p.unknown': ('g2p.html#unknown', 'text_to_speech/g2p.py'),
                                     'text_to_speech.g2p.unknown_words': ('g2p.html#unknown_words', 'text_to_speech/g2p.py'),
                                     'text_to_speech.g2p.voice_folder': ('g2p.html#voice_folder', 'text_to_speech/g2p.py'),
